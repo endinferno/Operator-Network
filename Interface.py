@@ -2,6 +2,10 @@ import tkinter as tk
 from Operator import *
 import Factory
 from functools import partial
+import easygui
+import pandas as pd
+import time
+import os
 
 
 class Interface:
@@ -17,6 +21,7 @@ class Interface:
         self.entry_dict = {0: None, 1: None, 2: None,
                            3: None, 4: None, 5: None}
         self.component_num = [2] * 6
+        self.factory = Factory.Factory()
 
     def defineModule(self):
         self.left_canvas = tk.Canvas(self.top, width=800, height=600, bg='red')
@@ -26,6 +31,41 @@ class Interface:
         self.listbox = tk.Listbox(self.member_frame, height=20, selectmode=tk.SINGLE)
         self.add_operator_button = tk.Button(
             self.member_frame, text='添加对象', command=self.addOperator)
+        self.import_from_excel_button = tk.Button(
+            self.member_frame, text='从Excel导入', command=self.importFromExcel)
+        self.export_excel_file_button = tk.Button(
+            self.member_frame, text='导出Excel', command=self.exportExcel)
+
+    def importFromExcel(self):
+        excel_file_name = easygui.fileopenbox()
+        excel_dict = {}
+        try:
+            if excel_file_name != None:
+                excel_dict = pd.read_excel(excel_file_name, None,
+                                           keep_default_na=False, header=None)
+        except ValueError:
+            tk.messagebox.showerror('错误', '文件格式错误，请使用Excel文件!')
+        else:
+            for key in excel_dict:
+                operator_data = excel_dict[key]
+                operator = Operator()
+                operator.readFromExcelData(operator_data)
+                self.factory.insert(operator)
+        for operator in self.factory.operator_list:
+            name = operator.getName()
+            self.listbox.insert(0, name)
+
+    def exportExcel(self):
+        excel_file_name = time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()) + '.xlsx'
+        if not (os.path.exists('./output') and os.path.isdir('./output')):
+            os.makedirs('./output')
+        writer = pd.ExcelWriter('./output/' + excel_file_name)
+        a = self.factory.getData()
+        for key in a:
+            data = pd.DataFrame(a[key])
+            data.to_excel(writer, sheet_name=key, index=False, header=None)
+        writer.close()
+        tk.messagebox.showinfo('成功', 'Excel文件生成成功，文件名' + excel_file_name)
 
     def addOperator(self):
         self.print_attr_window = tk.Toplevel()
@@ -88,15 +128,11 @@ class Interface:
         self.component_num[i] += 2
         self.create_sub_window()
 
-    def initOperator(self, factory):
-        self.factory = factory
-        name_list = self.factory.getNames()
-        for name in name_list:
-            self.listbox.insert(0, name)
-
     def packModule(self):
         self.listbox.pack()
         self.add_operator_button.pack()
+        self.import_from_excel_button.pack()
+        self.export_excel_file_button.pack()
         self.left_canvas.pack(side='left', fill='both', expand=True)
         self.member_frame.pack(side='top')
 

@@ -6,7 +6,6 @@ def main():
     factory = Factory.Factory()
     interface = Interface.Interface()
     interface.defineModule()
-    interface.initOperator(factory)
     interface.initAction()
     interface.packModule()
     interface.Run()

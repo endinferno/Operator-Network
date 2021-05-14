@@ -42,3 +42,43 @@ class Operator:
 
     def getName(self):
         return self.device_basic_attributes['s_name']
+
+    def getData(self, attr_number):
+        if attr_number == 0:
+            return self.device_basic_attributes
+        elif attr_number == 1:
+            return self.device_part_attributes
+        elif attr_number == 2:
+            return self.status_attributes
+        elif attr_number == 3:
+            return self.geometry_attributes
+        elif attr_number == 4:
+            return self.func_attributes
+        elif attr_number == 5:
+            return self.network_relation_attributes
+        else:
+            return None
+
+    def readFromExcelData(self, excel_data):
+        attr_type = 0
+        for row in range(len(excel_data.index)):
+            title = excel_data.loc[row].values[0]
+            if title != '':
+                if title == '设备基本属性':
+                    attr_type = DEVICE_BASIC
+                elif title == '设备部件属性':
+                    attr_type = DEVICE_PART
+                elif title == '设备状态属性':
+                    attr_type = DEVICE_STATUS
+                elif title == '设备几何属性':
+                    attr_type = DEVICE_GEOMETRY
+                elif title == '设备功能属性':
+                    attr_type = DEVICE_FUNC
+                elif title == '网络关联属性':
+                    attr_type = DEVICE_NETWORK
+                else:
+                    assert(True, '该属性不存在')
+                continue
+            key = excel_data.loc[row].values[1]
+            value = excel_data.loc[row].values[2]
+            self.Insert(attr_type, key, value)
